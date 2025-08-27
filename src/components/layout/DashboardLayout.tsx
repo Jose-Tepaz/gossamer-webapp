@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { usePathname } from 'next/navigation';
 import { 
   Menu, 
   Bell, 
@@ -35,13 +36,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   subtitle,
   actions
 }) => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { logout } = useAuth();
+  const pathname = usePathname();
 
-  const toggleSidebarCollapse = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
+
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -63,9 +63,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar 
-          user={user}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={toggleSidebarCollapse}
+          activePage={pathname}
         />
       </div>
 
@@ -77,7 +75,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             onClick={toggleMobileSidebar}
           />
           <div className="relative">
-            <Sidebar user={user} />
+            <Sidebar activePage={pathname} />
           </div>
         </div>
       )}

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { Eye, EyeOff, Mail, Lock, TrendingUp, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const loginSchema = z.object({
@@ -45,12 +45,7 @@ const LoginForm: React.FC = () => {
       <div className="w-full max-w-md space-y-8">
         {/* Logo and Title */}
         <div className="text-center">
-          <Link href="/" className="flex items-center justify-center space-x-2 mb-4">
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-              <TrendingUp className="h-7 w-7 text-white" />
-            </div>
-            <span className="font-bold text-2xl">FinanceApp</span>
-          </Link>
+          
           <h2 className="text-3xl font-bold tracking-tight text-gray-900">
             Welcome back
           </h2>

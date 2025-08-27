@@ -1,9 +1,6 @@
 'use client';
 
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -11,21 +8,11 @@ import {
   DollarSign, 
   Activity, 
   Users,
-  ArrowUpRight,
-  Plus
+  ArrowUpRight
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  
-  // Transform user data to match DashboardLayout expected format
-  const dashboardUser = user ? {
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    planType: user.planType || 'Free' as const,
-  } : undefined;
 
   // Mock portfolio data
   const portfolioStats = {
@@ -50,22 +37,9 @@ export default function DashboardPage() {
   ];
 
   return (
-    <ProtectedRoute>
-      <DashboardLayout 
-        user={dashboardUser}
-        title="Dashboard"
-        subtitle="Here's what's happening with your portfolio today."
-        actions={
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            New Model
-          </Button>
-        }
-      >
-      <div className="p-6">
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
@@ -249,8 +223,6 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </DashboardLayout>
-    </ProtectedRoute>
+    </div>
   );
 } 

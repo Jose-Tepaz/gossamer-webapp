@@ -22,31 +22,56 @@ Los usuarios podrán:
 - ✅ Crear modelos de inversión personalizados
 - ✅ Aplicar estos modelos a su cartera para ajustar la distribución de activos
 
-### Pantallas del Proyecto
-1. **Pantalla de autenticación** - Login/Registro/Recuperar contraseña
-2. **Conexión con broker** - Conectar cuenta de broker vía SnapTrade
-3. **Selección de plan** - Mostrar y suscribirse a planes
-4. **Dashboard principal** - Vista con tabs de activos y detalles
-5. **Modelos de inversión** - Crear y aplicar modelos de distribución
+### Flujo de la Aplicación
+
+#### Páginas Principales
+1. **Auth** - Login / Register / Forgot Password
+2. **Onboarding** - Pasos para activar cuenta (solo alta nueva)
+3. **Connect a Broker** - UI de conexiones con SnapTrade
+4. **Choose a Plan** - Selección de planes con Memberstack
+5. **Dashboard** - Resumen: conexiones, modelos, estado plan
+6. **Vista por Broker** - Lista de assets, Add/Edit Model, Trade
+7. **My Models** - CRUD completo de modelos de inversión
+8. **Knowledge Base** - Base de conocimientos
+9. **Support** - Sistema de soporte
+10. **Settings** - Configuraciones de usuario
 
 ---
 
 ## 🗂️ Estructura de Carpetas Planificada
 
 ```
-financial-app/
+gossamer-webapp/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
 │   │   │   ├── login/
 │   │   │   ├── register/
 │   │   │   └── forgot-password/
+│   │   ├── onboarding/
+│   │   │   └── page.tsx
+│   │   ├── connect-broker/
+│   │   │   └── page.tsx
+│   │   ├── choose-plan/
+│   │   │   └── page.tsx
 │   │   ├── dashboard/
-│   │   │   ├── assets/
-│   │   │   ├── models/
-│   │   │   └── settings/
-│   │   ├── broker-connection/
-│   │   ├── plans/
+│   │   │   └── page.tsx
+│   │   ├── broker/
+│   │   │   ├── [brokerId]/
+│   │   │   │   ├── assets/
+│   │   │   │   ├── models/
+│   │   │   │   └── trade/
+│   │   │   └── page.tsx
+│   │   ├── models/
+│   │   │   ├── create/
+│   │   │   ├── edit/
+│   │   │   └── page.tsx
+│   │   ├── knowledge-base/
+│   │   │   └── page.tsx
+│   │   ├── support/
+│   │   │   └── page.tsx
+│   │   ├── settings/
+│   │   │   └── page.tsx
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   ├── snaptrade/
@@ -58,8 +83,15 @@ financial-app/
 │   ├── components/
 │   │   ├── ui/ (ShadCN components)
 │   │   ├── auth/
+│   │   ├── onboarding/
+│   │   ├── broker-connection/
+│   │   ├── plan-selection/
 │   │   ├── dashboard/
+│   │   ├── broker-view/
 │   │   ├── models/
+│   │   ├── knowledge-base/
+│   │   ├── support/
+│   │   ├── settings/
 │   │   ├── layout/
 │   │   └── common/
 │   ├── lib/
@@ -71,15 +103,18 @@ financial-app/
 │   ├── types/
 │   │   ├── auth.ts
 │   │   ├── snaptrade.ts
-│   │   └── models.ts
+│   │   ├── models.ts
+│   │   └── broker.ts
 │   ├── hooks/
 │   │   ├── useAuth.ts
 │   │   ├── useSnapTrade.ts
 │   │   ├── useAirtable.ts
-│   │   └── useModels.ts
+│   │   ├── useModels.ts
+│   │   └── useBroker.ts
 │   └── store/
 │       ├── authStore.ts
-│       └── portfolioStore.ts
+│       ├── portfolioStore.ts
+│       └── brokerStore.ts
 ├── public/
 ├── .env.local
 ├── .env.example
@@ -183,13 +218,14 @@ financial-app/
 - [ ] **2.8** Crear tablas en Airtable (Users, Investment Models, Portfolios, Transactions)
 - [ ] **2.9** Obtener API key de Airtable
 
-### **FASE 3: Componentes Base**
+### **FASE 3: Componentes Base y Layout**
 - [x] **3.1** Instalar componentes ShadCN necesarios
 - [x] **3.2** Crear layout principal
 - [x] **3.3** Crear componente Header
 - [ ] **3.4** Crear componente Sidebar
 - [x] **3.5** Crear componente Footer
 - [x] **3.6** Configurar navegación básica
+- [ ] **3.7** Crear componentes de navegación comunes
 
 ### **FASE 4: Sistema de Autenticación**
 - [ ] **4.1** Configurar Memberstack en el proyecto
@@ -200,54 +236,98 @@ financial-app/
 - [ ] **4.6** Crear hooks de autenticación
 - [ ] **4.7** Implementar manejo de estado de usuario
 
-### **FASE 5: Integración SnapTrade**
-- [ ] **5.1** Configurar cliente SnapTrade
-- [ ] **5.2** Crear página de conexión con broker
-- [ ] **5.3** Implementar flujo OAuth de SnapTrade
-- [ ] **5.4** Crear confirmación de conexión exitosa
-- [ ] **5.5** Implementar servicio para obtener cuentas
-- [ ] **5.6** Implementar servicio para obtener posiciones
-- [ ] **5.7** Implementar servicio para obtener historial
+### **FASE 5: Onboarding y Flujo de Activación**
+- [ ] **5.1** Crear página de onboarding
+- [ ] **5.2** Implementar pasos de activación de cuenta
+- [ ] **5.3** Crear flujo de verificación de email
+- [ ] **5.4** Implementar redirección post-registro
+- [ ] **5.5** Crear componentes de progreso de onboarding
 
-### **FASE 6: Dashboard Principal**
-- [ ] **6.1** Crear layout del dashboard
-- [ ] **6.2** Implementar sistema de tabs
-- [ ] **6.3** Crear tab de activos conectados
-- [ ] **6.4** Crear tab de detalles de inversiones
-- [ ] **6.5** Implementar tabla de activos
-- [ ] **6.6** Mostrar valores en tiempo real
-- [ ] **6.7** Agregar gráficos básicos
+### **FASE 6: Conexión con Brokers**
+- [ ] **6.1** Configurar cliente SnapTrade
+- [ ] **6.2** Crear página de conexión con broker
+- [ ] **6.3** Implementar flujo OAuth de SnapTrade
+- [ ] **6.4** Crear confirmación de conexión exitosa
+- [ ] **6.5** Implementar servicio para obtener cuentas
+- [ ] **6.6** Implementar servicio para obtener posiciones
+- [ ] **6.7** Implementar servicio para obtener historial
+- [ ] **6.8** Crear componentes de selección de broker
 
-### **FASE 7: Modelos de Inversión**
-- [ ] **7.1** Crear página de modelos
-- [ ] **7.2** Implementar formulario de creación de modelos
-- [ ] **7.3** Implementar edición de modelos
-- [ ] **7.4** Implementar eliminación de modelos
-- [ ] **7.5** Crear listado de modelos
-- [ ] **7.6** Implementar comparación cartera vs modelo
-- [ ] **7.7** Calcular y mostrar diferencias
-- [ ] **7.8** Sugerir ajustes de cartera
+### **FASE 7: Sistema de Planes y Suscripciones**
+- [ ] **7.1** Crear página de selección de planes
+- [ ] **7.2** Integrar pagos con Memberstack
+- [ ] **7.3** Implementar restricciones por plan
+- [ ] **7.4** Crear página de gestión de suscripción
+- [ ] **7.5** Implementar comparación de planes
+- [ ] **7.6** Crear componentes de pricing
 
-### **FASE 8: Sistema de Suscripciones**
-- [ ] **8.1** Crear página de selección de planes
-- [ ] **8.2** Integrar pagos con Memberstack
-- [ ] **8.3** Implementar restricciones por plan
-- [ ] **8.4** Crear página de gestión de suscripción
+### **FASE 8: Dashboard Principal**
+- [ ] **8.1** Crear layout del dashboard
+- [ ] **8.2** Implementar resumen de conexiones
+- [ ] **8.3** Mostrar estado del plan actual
+- [ ] **8.4** Crear vista de modelos activos
+- [ ] **8.5** Implementar widgets de resumen
+- [ ] **8.6** Agregar gráficos básicos
+- [ ] **8.7** Crear componentes de estadísticas
 
-### **FASE 9: Optimización y Testing**
-- [ ] **9.1** Implementar loading states
-- [ ] **9.2** Implementar error handling
-- [ ] **9.3** Optimizar responsive design
-- [ ] **9.4** Optimizar performance
-- [ ] **9.5** Testing de componentes
-- [ ] **9.6** Testing de integración
-- [ ] **9.7** Preparar para deployment
+### **FASE 9: Vista por Broker**
+- [ ] **9.1** Crear layout de vista por broker
+- [ ] **9.2** Implementar lista de assets
+- [ ] **9.3** Crear funcionalidad Add/Edit Model
+- [ ] **9.4** Implementar funcionalidad Trade
+- [ ] **9.5** Crear componentes de tabla de activos
+- [ ] **9.6** Implementar filtros y búsqueda
+- [ ] **9.7** Crear componentes de gráficos por broker
 
-### **FASE 10: Deployment**
-- [ ] **10.1** Configurar deployment en Vercel
-- [ ] **10.2** Configurar variables de entorno de producción
-- [ ] **10.3** Testing en producción
-- [ ] **10.4** Documentación final
+### **FASE 10: Gestión de Modelos (CRUD)**
+- [ ] **10.1** Crear página principal de modelos
+- [ ] **10.2** Implementar formulario de creación de modelos
+- [ ] **10.3** Implementar edición de modelos
+- [ ] **10.4** Implementar eliminación de modelos
+- [ ] **10.5** Crear listado de modelos
+- [ ] **10.6** Implementar comparación cartera vs modelo
+- [ ] **10.7** Calcular y mostrar diferencias
+- [ ] **10.8** Sugerir ajustes de cartera
+- [ ] **10.9** Crear componentes de formularios de modelo
+
+### **FASE 11: Knowledge Base**
+- [ ] **11.1** Crear página de Knowledge Base
+- [ ] **11.2** Implementar sistema de categorías
+- [ ] **11.3** Crear componentes de búsqueda
+- [ ] **11.4** Implementar sistema de artículos
+- [ ] **11.5** Crear componentes de navegación de KB
+- [ ] **11.6** Implementar sistema de favoritos
+
+### **FASE 12: Sistema de Soporte**
+- [ ] **12.1** Crear página de soporte
+- [ ] **12.2** Implementar formulario de contacto
+- [ ] **12.3** Crear sistema de tickets
+- [ ] **12.4** Implementar chat en vivo (opcional)
+- [ ] **12.5** Crear FAQ dinámico
+- [ ] **12.6** Implementar sistema de feedback
+
+### **FASE 13: Configuraciones de Usuario**
+- [ ] **13.1** Crear página de settings
+- [ ] **13.2** Implementar configuración de perfil
+- [ ] **13.3** Crear configuración de notificaciones
+- [ ] **13.4** Implementar configuración de seguridad
+- [ ] **13.5** Crear configuración de preferencias
+- [ ] **13.6** Implementar exportación de datos
+
+### **FASE 14: Optimización y Testing**
+- [ ] **14.1** Implementar loading states
+- [ ] **14.2** Implementar error handling
+- [ ] **14.3** Optimizar responsive design
+- [ ] **14.4** Optimizar performance
+- [ ] **14.5** Testing de componentes
+- [ ] **14.6** Testing de integración
+- [ ] **14.7** Preparar para deployment
+
+### **FASE 15: Deployment**
+- [ ] **15.1** Configurar deployment en Vercel
+- [ ] **15.2** Configurar variables de entorno de producción
+- [ ] **15.3** Testing en producción
+- [ ] **15.4** Documentación final
 
 ---
 
@@ -334,10 +414,12 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 ## 🎯 Próximos Pasos Inmediatos
 
-1. **Configurar ShadCN UI** - Inicializar y configurar componentes base
-2. **Instalar dependencias** - Agregar todas las librerías necesarias
-3. **Crear estructura de carpetas** - Organizar el proyecto
-4. **Configurar variables de entorno** - Preparar configuración
+1. **Completar FASE 3** - Terminar componentes base y navegación
+2. **Configurar servicios externos** - Memberstack, SnapTrade y Airtable
+3. **Implementar autenticación** - Sistema completo de login/registro
+4. **Crear flujo de onboarding** - Pasos de activación de cuenta
+5. **Desarrollar conexión con brokers** - Integración SnapTrade
+6. **Implementar sistema de planes** - Integración Memberstack
 
 ---
 

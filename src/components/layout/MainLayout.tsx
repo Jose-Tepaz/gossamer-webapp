@@ -1,46 +1,37 @@
-'use client';
+"use client"
 
-import React, { useState } from 'react';
-import Header from './Header';
-import Footer from './Footer';
+import { usePathname } from "next/navigation"
+import Sidebar from "./Sidebar"
+import Header from "./Header"
+import { useAuth } from "@/hooks/useAuth"
 
 interface MainLayoutProps {
-  children: React.ReactNode;
-  user?: {
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    planType: 'Free' | 'Pro' | 'Premium';
-  };
-  showFooter?: boolean;
+  children: React.ReactNode
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ 
-  children, 
-  user, 
-  showFooter = true 
-}) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+export default function MainLayout({ children }: MainLayoutProps) {
+  const { user, logout } = useAuth()
+  const pathname = usePathname()
 
-  const handleMenuToggle = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const userName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : "Guest"
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen w-full bg-[#f4f4f4]">
       <Header 
-        user={user}
-        onMenuToggle={handleMenuToggle}
-        isMenuOpen={isMobileMenuOpen}
+        userName={userName}
+        isLoggedIn={!!user}
+        onLogout={logout}
       />
-      
-      <main className="flex-1">
-        {children}
-      </main>
-      
-      {showFooter && <Footer />}
-    </div>
-  );
-};
 
-export default MainLayout; 
+      <div className="flex">
+        <Sidebar activePage={pathname} />
+        
+        <main className="flex-1">
+          <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6 md:pt-16">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+} 

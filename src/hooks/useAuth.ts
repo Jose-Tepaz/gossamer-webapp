@@ -234,7 +234,7 @@ export const useAuth = () => {
         setAuthState({ user, loading: false, error: null });
         
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/onboarding');
         }, 100);
         
         return { success: true, user };
@@ -289,7 +289,7 @@ export const useAuth = () => {
           }
 
           setAuthState({ user, loading: false, error: null });
-          router.push('/dashboard');
+          router.push('/onboarding');
           return { success: true, user };
         } else {
           const errorMessage = 'Registration failed';
