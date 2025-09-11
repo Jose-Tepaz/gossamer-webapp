@@ -12,7 +12,7 @@ Web app financiera desarrollada con **Next.js** que permite a los usuarios conec
 - **ShadCN UI** - Componentes UI accesibles y personalizables
 - **Memberstack** - Autenticación, membresías y gestión de usuarios
 - **SnapTrade API** - Conexión con brokers y gestión de activos financieros
-- **Airtable** - Base de datos para almacenar modelos de inversión, configuraciones y datos de usuario
+- **Supabase** - Base de datos PostgreSQL para almacenar modelos de inversión, configuraciones y datos de usuario
 
 ### Funcionalidades Principales
 Los usuarios podrán:
@@ -40,7 +40,6 @@ Los usuarios podrán:
 
 ## 🗂️ Estructura de Carpetas Planificada
 
-```
 gossamer-webapp/
 ├── src/
 │   ├── app/
@@ -108,7 +107,7 @@ gossamer-webapp/
 │   ├── hooks/
 │   │   ├── useAuth.ts
 │   │   ├── useSnapTrade.ts
-│   │   ├── useAirtable.ts
+│   │   ├── useSupabase.ts
 │   │   ├── useModels.ts
 │   │   └── useBroker.ts
 │   └── store/
@@ -123,22 +122,20 @@ gossamer-webapp/
 
 ---
 
-## 🗄️ Estructura de Base de Datos Airtable
+## 🗄️ Estructura de Base de Datos Supabase
 
 ### Tablas Principales
 
-#### 1. **Users** (Usuarios)
+#### 1. **user_data** (Datos de Usuario)
 ```
-- id (Primary Key)
-- memberstack_id (Text)
-- email (Email)
+- id (Primary Key - UUID)
+- user_id (Text) - ID de Memberstack
+- email (Text)
 - first_name (Text)
 - last_name (Text)
-- plan_type (Single Select: Free, Pro, Premium)
-- created_at (Date)
-- updated_at (Date)
-- snaptrade_user_id (Text)
-- is_broker_connected (Checkbox)
+- user_secret (Text) - ID de SnapTrade
+- created_at (Timestamp with time zone)
+- updated_at (Timestamp with time zone)
 ```
 
 #### 2. **Investment_Models** (Modelos de Inversión)
@@ -214,9 +211,9 @@ gossamer-webapp/
 - [ ] **2.4** Registrarse en SnapTrade
 - [ ] **2.5** Obtener credenciales API de SnapTrade
 - [ ] **2.6** Configurar webhooks de SnapTrade
-- [ ] **2.7** Configurar base de datos Airtable
-- [ ] **2.8** Crear tablas en Airtable (Users, Investment Models, Portfolios, Transactions)
-- [ ] **2.9** Obtener API key de Airtable
+- [ ] **2.7** Configurar base de datos Supabase
+- [ ] **2.8** Crear tablas en Supabase (user_data, Investment Models, Portfolios, Transactions)
+- [ ] **2.9** Obtener API keys de Supabase
 
 ### **FASE 3: Componentes Base y Layout**
 - [x] **3.1** Instalar componentes ShadCN necesarios
@@ -341,8 +338,8 @@ npx shadcn-ui@latest init
 # Memberstack
 npm install @memberstack/admin @memberstack/dom
 
-# Airtable
-npm install airtable
+# Supabase
+npm install @supabase/supabase-js
 
 # HTTP Client
 npm install axios
@@ -382,9 +379,10 @@ NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=
 SNAPTRADE_CONSUMER_KEY=
 SNAPTRADE_CONSUMER_SECRET=
 
-# Airtable
-AIRTABLE_API_KEY=
-AIRTABLE_BASE_ID=
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
 # Base URL
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -406,16 +404,17 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 - [Documentación](https://ui.shadcn.com/)
 - [Componentes](https://ui.shadcn.com/docs/components)
 
-### Airtable
-- [Documentación API](https://airtable.com/developers/web/api/introduction)
-- [JavaScript SDK](https://github.com/Airtable/airtable.js)
+### Supabase
+- [Documentación oficial](https://supabase.com/docs)
+- [JavaScript SDK](https://supabase.com/docs/reference/javascript)
+- [Guía de migración](https://supabase.com/docs/guides/migrations)
 
 ---
 
 ## 🎯 Próximos Pasos Inmediatos
 
 1. **Completar FASE 3** - Terminar componentes base y navegación
-2. **Configurar servicios externos** - Memberstack, SnapTrade y Airtable
+2. **Configurar servicios externos** - Memberstack, SnapTrade y Supabase
 3. **Implementar autenticación** - Sistema completo de login/registro
 4. **Crear flujo de onboarding** - Pasos de activación de cuenta
 5. **Desarrollar conexión con brokers** - Integración SnapTrade

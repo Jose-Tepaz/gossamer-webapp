@@ -11,10 +11,9 @@ import { Wallet, Landmark, Building2, Banknote, ArrowRight, Plus } from "lucide-
 export default function BrokerPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { getConnectedBrokers } = useBrokerConnections()
+  const { connectedBrokers } = useBrokerConnections()
   
   const userName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : "Guest"
-  const connectedBrokers = getConnectedBrokers()
 
   const getBrokerIcon = (brokerId: string) => {
     switch (brokerId) {
@@ -83,21 +82,21 @@ export default function BrokerPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {connectedBrokers.map((broker) => (
+          {connectedBrokers.map((brokerId) => (
             <Card 
-              key={broker.id} 
+              key={brokerId} 
               className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push(`/broker/${broker.id}`)}
+              onClick={() => router.push(`/broker/${brokerId}`)}
             >
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-gray-100">
-                    {getBrokerIcon(broker.id)}
+                    {getBrokerIcon(brokerId)}
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{broker.name}</CardTitle>
+                    <CardTitle className="text-lg">{brokerId.charAt(0).toUpperCase() + brokerId.slice(1)}</CardTitle>
                     <p className="text-sm text-gray-500">
-                      Connected {new Date(broker.connectedAt).toLocaleDateString()}
+                      Connected broker
                     </p>
                   </div>
                 </div>

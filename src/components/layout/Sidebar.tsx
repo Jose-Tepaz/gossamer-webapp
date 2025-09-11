@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import type React from "react"
@@ -24,6 +25,7 @@ type NavItem = {
 
 interface SidebarProps {
   activePage?: string
+  isMobile?: boolean
 }
 
 const getBrokerIcon = (brokerId: string) => {
@@ -52,18 +54,36 @@ const NAV_BOTTOM: NavItem[] = [
   { label: "Settings", icon: <Settings className="h-4 w-4" />, href: "/settings" },
 ]
 
-export default function Sidebar({ activePage }: SidebarProps) {
-  const { getConnectedBrokers } = useBrokerConnections()
-  const connectedBrokers = getConnectedBrokers()
+export default function Sidebar({ activePage, isMobile = false }: SidebarProps) {
+  const { connectedBrokers, brokerDetails, isHydrated } = useBrokerConnections()
+  
+  // Debug logs
+  console.log('🔍 Sidebar - connectedBrokers:', connectedBrokers);
+  console.log('🔍 Sidebar - brokerDetails:', brokerDetails);
   
   const getActiveItem = (href: string) => {
     if (!activePage) return false
     return activePage === href || (activePage.startsWith('/broker') && href.startsWith('/broker'))
   }
 
+  // Evitar problemas de hidratación
+  if (!isHydrated) {
+    return (
+      <aside
+        className={isMobile ? "flex flex-col w-full h-full" : "hidden md:flex md:flex-col md:w-64 lg:w-72 h-screen sticky top-0 border-r"}
+        style={{ backgroundColor: "#010824", borderColor: "#0f1324" }}
+        aria-label="Barra lateral de navegación"
+      >
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside
-      className="hidden md:flex md:flex-col md:w-64 lg:w-72 h-screen sticky top-0 border-r"
+      className={isMobile ? "flex flex-col w-full h-full" : "hidden md:flex md:flex-col md:w-64 lg:w-72 h-screen sticky top-0 border-r"}
       style={{ backgroundColor: "#010824", borderColor: "#0f1324" }}
       aria-label="Barra lateral de navegación"
     >
@@ -108,13 +128,16 @@ export default function Sidebar({ activePage }: SidebarProps) {
                 Connected Brokers
               </div>
             </div>
-            {connectedBrokers.map((broker) => {
+            {connectedBrokers.map((brokerId) => {
+              const broker = brokerDetails[brokerId];
+              if (!broker) return null;
+              
               // Solo marcar como activo el broker exacto en el que estoy
-              const isActive = activePage === `/broker/${broker.id}`;
+              const isActive = activePage === `/broker/${brokerId}`;
               return (
                 <Link
-                  key={broker.id}
-                  href={`/broker/${broker.id}`}
+                  key={brokerId}
+                  href={`/broker/${brokerId}`}
                   className={[
                     "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium",
                     isActive ? "text-white" : "text-white/80 hover:text-white",
@@ -129,9 +152,9 @@ export default function Sidebar({ activePage }: SidebarProps) {
                     )}
                     aria-hidden="true"
                   >
-                    {getBrokerIcon(broker.id)}
+                    {getBrokerIcon(brokerId)}
                   </span>
-                  <span>{broker.name}</span>
+                  <span>{(broker as any).name || brokerId.charAt(0).toUpperCase() + brokerId.slice(1)}</span>
                 </Link>
               )
             })}

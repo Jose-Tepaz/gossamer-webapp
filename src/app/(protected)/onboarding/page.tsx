@@ -123,6 +123,11 @@ export default function OnboardingPage() {
     setCurrentStep('success')
   }
 
+  const handleSkipBroker = () => {
+    // Skip the broker connection step and go directly to plan selection
+    setCurrentStep('choose-plan')
+  }
+
   const handlePlanSelect = (plan: Plan) => {
     try {
       localStorage.setItem("membership_plan", JSON.stringify({ plan, billing }))
@@ -188,13 +193,15 @@ export default function OnboardingPage() {
                 Connect Your Broker
               </h2>
               <p className="text-gray-600">
-                Choose your broker to securely connect and sync your portfolio.
+                Choose your broker to securely connect and sync your portfolio. You can skip this step and connect later.
               </p>
             </div>
             <ConnectBroker 
               onBrokerConnect={handleBrokerConnect}
+              onSkip={handleSkipBroker}
               showBackButton={false}
               showContinueButton={false}
+              showSkipButton={true}
             />
           </div>
         )

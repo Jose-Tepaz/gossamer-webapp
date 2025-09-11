@@ -51,6 +51,11 @@ export default function Home() {
                 Go to Dashboard
               </Button>
             </Link>
+            <Link href="/snaptrade" className="block">
+              <Button variant="outline" className="w-full">
+                SnapTrade Integration
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

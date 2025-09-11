@@ -75,7 +75,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             onClick={toggleMobileSidebar}
           />
           <div className="relative">
-            <Sidebar activePage={pathname} />
+            <Sidebar activePage={pathname} isMobile={true} />
           </div>
         </div>
       )}

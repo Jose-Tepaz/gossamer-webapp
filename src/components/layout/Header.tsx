@@ -39,7 +39,7 @@ function MobileNav({ isLoggedIn, onLogout }: HeaderProps) {
               <SheetTitle className="text-white">GOSSAMER</SheetTitle>
             </SheetHeader>
             <div className="px-3 pb-4">
-              <Sidebar activePage={pathname} />
+              <Sidebar activePage={pathname} isMobile={true} />
               {isLoggedIn && (
                 <button
                   onClick={handleLogout}

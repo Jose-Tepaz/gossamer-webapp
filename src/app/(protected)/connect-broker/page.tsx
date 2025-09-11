@@ -13,17 +13,13 @@ import { useState } from "react"
 export default function ConnectBrokerPage() {
   const router = useRouter()
   const { markBrokerConnected } = useOnboarding()
-  const { connectBroker, getConnectedBrokers } = useBrokerConnections()
+  const { connectedBrokers, isHydrated } = useBrokerConnections()
   const [showSuccess, setShowSuccess] = useState(false)
   const [connectedBroker, setConnectedBroker] = useState<string>('')
 
   const handleBrokerConnect = (brokerName: string) => {
     // Mark broker as connected in onboarding (if in onboarding flow)
     markBrokerConnected()
-    
-    // Connect broker using the hook
-    const brokerId = getBrokerId(brokerName)
-    connectBroker(brokerId, brokerName)
     
     // Show success state
     setConnectedBroker(brokerName)
@@ -35,15 +31,15 @@ export default function ConnectBrokerPage() {
     }, 3000)
   }
   
-  const getBrokerId = (name: string): string => {
-    const nameToId: Record<string, string> = {
-      'Binance': 'binance',
-      'Coinbase': 'coinbase',
-      'Kraken': 'kraken',
-      'Robinhood': 'robinhood'
-    }
-    return nameToId[name] || name.toLowerCase()
-  }
+  // const getBrokerId = (name: string): string => {
+  //   const nameToId: Record<string, string> = {
+  //     'Binance': 'binance',
+  //     'Coinbase': 'coinbase',
+  //     'Kraken': 'kraken',
+  //     'Robinhood': 'robinhood'
+  //   }
+  //   return nameToId[name] || name.toLowerCase()
+  // }
 
   const handleContinue = () => {
     // Check if user is in onboarding flow
@@ -55,6 +51,23 @@ export default function ConnectBrokerPage() {
       // Go to dashboard or broker management
       router.push('/dashboard')
     }
+  }
+
+  // Evitar problemas de hidratación
+  if (!isHydrated) {
+    return (
+      <ProtectedRoute>
+        <div className="relative min-h-screen overflow-hidden">
+          <div className="absolute inset-0 bg-slate-900/70" />
+          <div className="relative z-10 min-h-screen p-4 flex items-center justify-center">
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              <span className="ml-2 text-white">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
   }
 
   return (
@@ -124,18 +137,18 @@ export default function ConnectBrokerPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {getConnectedBrokers().length === 0 ? (
+                    {connectedBrokers.length === 0 ? (
                       <div className="text-center py-4 text-white/50">
                         No brokers connected yet
                       </div>
                     ) : (
-                      getConnectedBrokers().map((broker) => (
-                        <div key={broker.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                      connectedBrokers.map((brokerId) => (
+                        <div key={brokerId} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                           <CheckCircle2 className="h-5 w-5 text-green-400" />
                           <div>
-                            <div className="font-medium">{broker.name}</div>
+                            <div className="font-medium">{brokerId}</div>
                             <div className="text-sm text-white/70">
-                              Connected {new Date(broker.connectedAt).toLocaleDateString()}
+                              Connected
                             </div>
                           </div>
                         </div>

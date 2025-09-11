@@ -4,9 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, AuthState } from '@/types/auth';
-import { syncUserWithSupabase, registerUserInSnapTrade } from '@/lib/memberstack-supabase-sync';
 
-export const useAuth = () => {
+export const useAuthAlternative = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     loading: true,
@@ -41,8 +40,35 @@ export const useAuth = () => {
         
         // Real Memberstack - check current member
         try {
-          const MemberStack = await import('@memberstack/dom');
-          const memberstack = MemberStack.default.init({ publicKey });
+          // Usar importación dinámica con retry
+          let MemberStack;
+          let retries = 3;
+          
+          while (retries > 0) {
+            try {
+              MemberStack = await import('@memberstack/dom');
+              break;
+            } catch (importError) {
+              console.log(`Import attempt ${4 - retries} failed:`, importError);
+              retries--;
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+          }
+          
+          if (!MemberStack) {
+            throw new Error('Failed to import Memberstack after 3 attempts');
+          }
+          
+          const memberstack = MemberStack.default.init({ 
+            publicKey,
+            // Configuraciones adicionales para desarrollo
+            ...(process.env.NODE_ENV === 'development' && {
+              // Intentar diferentes configuraciones
+              timeout: 10000,
+            })
+          });
           
           const member = await memberstack.getCurrentMember();
           
@@ -61,17 +87,22 @@ export const useAuth = () => {
             };
             
             setAuthState({ user, loading: false, error: null });
-            
-            // Sincronizar con Supabase de manera no bloqueante
-            syncUserWithSupabase(user).catch(error => {
-              console.error('Error en sincronización con Supabase:', error);
-            });
           } else {
             console.log('ℹ️ No existing member found');
             setAuthState({ user: null, loading: false, error: null });
           }
         } catch (memberstackError) {
           console.error('❌ Memberstack error, falling back to demo mode:', memberstackError);
+          
+          // Log detallado del error
+          if (typeof memberstackError === 'object' && memberstackError !== null) {
+            try {
+              console.error('Error details:', JSON.stringify(memberstackError, null, 2));
+            } catch {
+              console.error('Could not serialize error');
+            }
+          }
+          
           // Fallback to demo mode
           const storedUser = localStorage.getItem('user');
           if (storedUser) {
@@ -94,7 +125,7 @@ export const useAuth = () => {
     initAuth();
   }, []);
 
-  // Login function
+  // Login function with retry logic
   const login = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
@@ -134,53 +165,61 @@ export const useAuth = () => {
         return { success: true, user };
       }
 
-      // Real Memberstack login
+      // Real Memberstack login with retry
       console.log('🔄 Attempting Memberstack login...');
-      try {
-        const MemberStack = await import('@memberstack/dom');
-        const memberstack = MemberStack.default.init({ publicKey });
-
-        const result = await memberstack.loginMemberEmailPassword({
-          email,
-          password,
-        }) as any;
-        
-        console.log('📋 Memberstack login result:', result);
-
-        if (result && result.data && result.data.member) {
-          const memberData = result.data.member;
-          const user: User = {
-            id: memberData.id,
-            email: memberData.auth?.email || email,
-            firstName: memberData.customFields?.['first-name'] || '',
-            lastName: memberData.customFields?.['last-name'] || '',
-            planType: memberData.planConnections?.[0]?.planId === 'pro' ? 'Pro' : 
-                     memberData.planConnections?.[0]?.planId === 'premium' ? 'Premium' : 'Free',
-            createdAt: memberData.createdAt,
-            updatedAt: memberData.lastLogin || memberData.createdAt,
-          };
-
-          setAuthState({ user, loading: false, error: null });
-          
-          // Sincronizar con Supabase de manera no bloqueante
-          syncUserWithSupabase(user).catch(error => {
-            console.error('Error en sincronización con Supabase:', error);
-          });
-          
-          router.push('/dashboard');
-          return { success: true, user };
-        } else {
-          const errorMessage = 'Invalid email or password';
-          setAuthState({ 
-            user: null, 
-            loading: false, 
-            error: errorMessage 
-          });
-          return { success: false, error: errorMessage };
+      
+      let MemberStack;
+      let retries = 3;
+      
+      while (retries > 0) {
+        try {
+          MemberStack = await import('@memberstack/dom');
+          break;
+        } catch (importError) {
+          console.log(`Import attempt ${4 - retries} failed:`, importError);
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
-      } catch (memberstackError) {
-        console.error('Memberstack login error:', memberstackError);
-        const errorMessage = 'Login failed. Please check your credentials.';
+      }
+      
+      if (!MemberStack) {
+        throw new Error('Failed to import Memberstack after 3 attempts');
+      }
+      
+      const memberstack = MemberStack.default.init({ 
+        publicKey,
+        ...(process.env.NODE_ENV === 'development' && {
+          timeout: 10000,
+        })
+      });
+
+      const result = await memberstack.loginMemberEmailPassword({
+        email,
+        password,
+      }) as any;
+      
+      console.log('📋 Memberstack login result:', result);
+
+      if (result && result.data && result.data.member) {
+        const memberData = result.data.member;
+        const user: User = {
+          id: memberData.id,
+          email: memberData.auth?.email || email,
+          firstName: memberData.customFields?.['first-name'] || '',
+          lastName: memberData.customFields?.['last-name'] || '',
+          planType: memberData.planConnections?.[0]?.planId === 'pro' ? 'Pro' : 
+                   memberData.planConnections?.[0]?.planId === 'premium' ? 'Premium' : 'Free',
+          createdAt: memberData.createdAt,
+          updatedAt: memberData.lastLogin || memberData.createdAt,
+        };
+
+        setAuthState({ user, loading: false, error: null });
+        router.push('/dashboard');
+        return { success: true, user };
+      } else {
+        const errorMessage = 'Invalid email or password';
         setAuthState({ 
           user: null, 
           loading: false, 
@@ -189,6 +228,17 @@ export const useAuth = () => {
         return { success: false, error: errorMessage };
       }
     } catch (error: unknown) {
+      console.error('Login error:', error);
+      
+      // Log detallado del error
+      if (typeof error === 'object' && error !== null) {
+        try {
+          console.error('Error details:', JSON.stringify(error, null, 2));
+        } catch {
+          console.error('Could not serialize error');
+        }
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'An error occurred during login';
       setAuthState({ 
         user: null, 
@@ -199,7 +249,7 @@ export const useAuth = () => {
     }
   };
 
-  // Register function
+  // Register function with retry logic
   const register = async (email: string, password: string, firstName?: string, lastName?: string) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
@@ -220,15 +270,6 @@ export const useAuth = () => {
           updatedAt: new Date().toISOString(),
         };
 
-        // Create user in Supabase (Demo mode)
-        try {
-          await syncUserWithSupabase(user);
-          console.log('✅ User synced with Supabase');
-        } catch (supabaseError) {
-          console.error('❌ Error syncing user with Supabase:', supabaseError);
-          // Continue with registration even if Supabase fails
-        }
-
         localStorage.setItem('user', JSON.stringify(user));
         setAuthState({ user, loading: false, error: null });
         
@@ -239,62 +280,60 @@ export const useAuth = () => {
         return { success: true, user };
       }
 
-      // Real Memberstack registration
-      try {
-        const MemberStack = await import('@memberstack/dom');
-        const memberstack = MemberStack.default.init({ publicKey });
-
-        const result = await memberstack.signupMemberEmailPassword({
-          email,
-          password,
-          customFields: {
-            'first-name': firstName || '',
-            'last-name': lastName || '',
-          },
-        }) as any;
-
-        if (result && result.data && result.data.member) {
-          const memberData = result.data.member;
-          const user: User = {
-            id: memberData.id,
-            email: memberData.auth?.email || email,
-            firstName: firstName || '',
-            lastName: lastName || '',
-            planType: 'Free',
-            createdAt: memberData.createdAt,
-            updatedAt: memberData.lastLogin || memberData.createdAt,
-          };
-
-          // Create user in Supabase (Real mode)
-          try {
-            await syncUserWithSupabase(user);
-            console.log('✅ User synced with Supabase');
-          } catch (supabaseError) {
-            console.error('❌ Error syncing user with Supabase:', supabaseError);
-            // Continue with registration even if Supabase fails
+      // Real Memberstack registration with retry
+      let MemberStack;
+      let retries = 3;
+      
+      while (retries > 0) {
+        try {
+          MemberStack = await import('@memberstack/dom');
+          break;
+        } catch (importError) {
+          console.log(`Import attempt ${4 - retries} failed:`, importError);
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
-
-          setAuthState({ user, loading: false, error: null });
-          
-          // Registrar automáticamente en SnapTrade después del registro exitoso
-          registerUserInSnapTrade(user).catch(error => {
-            console.error('Error en registro automático de SnapTrade:', error);
-          });
-          
-          router.push('/onboarding');
-          return { success: true, user };
-        } else {
-          const errorMessage = 'Registration failed';
-          setAuthState({ 
-            user: null, 
-            loading: false, 
-            error: errorMessage 
-          });
-          return { success: false, error: errorMessage };
         }
-      } catch (memberstackError) {
-        console.error('Memberstack registration error:', memberstackError);
-        const errorMessage = 'Registration failed. Please try again.';
+      }
+      
+      if (!MemberStack) {
+        throw new Error('Failed to import Memberstack after 3 attempts');
+      }
+      
+      const memberstack = MemberStack.default.init({ 
+        publicKey,
+        ...(process.env.NODE_ENV === 'development' && {
+          timeout: 10000,
+        })
+      });
+
+      const result = await memberstack.signupMemberEmailPassword({
+        email,
+        password,
+        customFields: {
+          'first-name': firstName || '',
+          'last-name': lastName || '',
+        },
+      }) as any;
+
+      if (result && result.data && result.data.member) {
+        const memberData = result.data.member;
+        const user: User = {
+          id: memberData.id,
+          email: memberData.auth?.email || email,
+          firstName: firstName || '',
+          lastName: lastName || '',
+          planType: 'Free',
+          createdAt: memberData.createdAt,
+          updatedAt: memberData.lastLogin || memberData.createdAt,
+        };
+
+        setAuthState({ user, loading: false, error: null });
+        router.push('/onboarding');
+        return { success: true, user };
+      } else {
+        const errorMessage = 'Registration failed';
         setAuthState({ 
           user: null, 
           loading: false, 
@@ -303,6 +342,17 @@ export const useAuth = () => {
         return { success: false, error: errorMessage };
       }
     } catch (error: unknown) {
+      console.error('Registration error:', error);
+      
+      // Log detallado del error
+      if (typeof error === 'object' && error !== null) {
+        try {
+          console.error('Error details:', JSON.stringify(error, null, 2));
+        } catch {
+          console.error('Could not serialize error');
+        }
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
       setAuthState({ 
         user: null, 
@@ -332,10 +382,6 @@ export const useAuth = () => {
         const memberstack = MemberStack.default.init({ publicKey });
         
         await memberstack.logout();
-        
-        // Nota: No eliminamos el usuario de Supabase en logout
-        // Solo se elimina cuando se elimina la cuenta en Memberstack
-        
         setAuthState({ user: null, loading: false, error: null });
         router.push('/login');
       } catch (memberstackError) {
@@ -391,4 +437,4 @@ export const useAuth = () => {
     logout,
     resetPassword,
   };
-}; 
+};
