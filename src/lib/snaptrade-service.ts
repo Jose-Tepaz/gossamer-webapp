@@ -71,6 +71,9 @@ class SnapTradeService {
 
   constructor(useMock: boolean = false) {
     this.urls = getSnapTradeUrls(useMock);
+    console.log('🔧 SnapTradeService inicializado con URLs:', this.urls);
+    console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔧 NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
   }
 
   /**
