@@ -46,7 +46,7 @@ export const getMemberstack = () => {
   return memberstackDOM;
 };
 
-// Initialize on module load
+// Initialize on module load..
 if (typeof window !== 'undefined') {
   initMemberstack();
 }
