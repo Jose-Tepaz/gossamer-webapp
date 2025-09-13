@@ -38,7 +38,7 @@ export const initMemberstack = () => {
   return memberstackDOM;
 };
 
-// Get Memberstack instance
+// Get Memberstack instance..
 export const getMemberstack = () => {
   if (!memberstackDOM) {
     initMemberstack();
