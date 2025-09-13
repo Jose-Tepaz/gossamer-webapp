@@ -9,7 +9,7 @@ export class UserDataApiService {
   static async createUser(data: CreateUserDataInput): Promise<UserData> {
     console.log('🔧 Creando usuario via API...')
     
-    const response = await fetch('/api/supabase/user-data', {
+    const response = await fetch('/api/user-data', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ export class UserDataApiService {
 
   // Obtener usuario por ID de Memberstack
   static async getUserByMemberstackId(userId: string): Promise<UserData | null> {
-    const response = await fetch(`/api/supabase/user-data?user_id=${encodeURIComponent(userId)}`, {
+    const response = await fetch(`/api/user-data?user_id=${encodeURIComponent(userId)}`, {
       method: 'GET',
     })
 
@@ -50,7 +50,7 @@ export class UserDataApiService {
   static async updateUser(userId: string, updates: UpdateUserDataInput): Promise<UserData> {
     console.log('🔧 Actualizando usuario via API...')
     
-    const response = await fetch('/api/supabase/user-data', {
+    const response = await fetch('/api/user-data', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export class UserDataApiService {
   static async deleteUser(userId: string): Promise<void> {
     console.log('🔧 Eliminando usuario via API...')
     
-    const response = await fetch(`/api/supabase/user-data?user_id=${encodeURIComponent(userId)}`, {
+    const response = await fetch(`/api/user-data?user_id=${encodeURIComponent(userId)}`, {
       method: 'DELETE',
     })
 
