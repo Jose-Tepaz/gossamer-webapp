@@ -13,6 +13,7 @@ import {
   Settings,
   Building2,
   Banknote,
+  TrendingUp,
 } from "lucide-react"
 import { useBrokerConnections } from "@/hooks/useBrokerConnections"
 
@@ -46,6 +47,7 @@ const getBrokerIcon = (brokerId: string) => {
 const NAV_TOP: NavItem[] = [
   { label: "Home", icon: <Home className="h-4 w-4" />, href: "/dashboard" },
   { label: "My Models", icon: <Brain className="h-4 w-4" />, href: "/models" },
+  { label: "Signals", icon: <TrendingUp className="h-4 w-4" />, href: "/signals" },
   { label: "Knowledge base", icon: <BookOpen className="h-4 w-4" />, href: "/knowledge-base" },
 ]
 

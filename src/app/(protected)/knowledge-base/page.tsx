@@ -1,81 +1,33 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search, BookOpen, Star, Clock, TrendingUp } from "lucide-react"
-
-
-const ARTICLES = [
-  {
-    id: 1,
-    title: "Getting Started with Portfolio Management",
-    description: "Learn the basics of creating and managing your investment portfolio",
-    category: "Beginner",
-    readTime: "5 min",
-    views: 1240,
-    featured: true,
-    tags: ["portfolio", "basics", "getting-started"]
-  },
-  {
-    id: 2,
-    title: "Understanding Investment Models",
-    description: "How to create and apply investment models to your portfolio",
-    category: "Intermediate",
-    readTime: "8 min",
-    views: 890,
-    featured: false,
-    tags: ["models", "investment", "strategy"]
-  },
-  {
-    id: 3,
-    title: "Connecting Your Brokerage Account",
-    description: "Step-by-step guide to securely connect your broker",
-    category: "Beginner",
-    readTime: "3 min",
-    views: 2100,
-    featured: true,
-    tags: ["broker", "connection", "security"]
-  },
-  {
-    id: 4,
-    title: "Advanced Portfolio Rebalancing",
-    description: "Master the art of portfolio rebalancing for optimal returns",
-    category: "Advanced",
-    readTime: "12 min",
-    views: 456,
-    featured: false,
-    tags: ["rebalancing", "advanced", "optimization"]
-  },
-  {
-    id: 5,
-    title: "Risk Management Strategies",
-    description: "Essential risk management techniques for investors",
-    category: "Intermediate",
-    readTime: "10 min",
-    views: 678,
-    featured: false,
-    tags: ["risk", "management", "strategy"]
-  }
-]
+import { useKnowledgeArticles, type KnowledgeArticle } from "@/hooks/useKnowledgeArticles"
 
 const CATEGORIES = ["All", "Beginner", "Intermediate", "Advanced"]
 
 export default function KnowledgeBasePage() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
 
-  const filteredArticles = ARTICLES.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         article.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         article.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    
-    const matchesCategory = selectedCategory === "All" || article.category === selectedCategory
-    
-    return matchesSearch && matchesCategory
+  // Usar el hook personalizado para manejar artículos
+  const {
+    filteredArticles,
+    loading,
+    error,
+    getStats
+  } = useKnowledgeArticles({
+    searchQuery: searchQuery || undefined,
+    category: selectedCategory !== "All" ? selectedCategory : undefined
   })
+
+  const stats = getStats()
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -84,6 +36,40 @@ export default function KnowledgeBasePage() {
       case "Advanced": return "bg-red-100 text-red-800"
       default: return "bg-gray-100 text-gray-800"
     }
+  }
+
+  const handleArticleClick = (article: KnowledgeArticle) => {
+    router.push(`/knowledge-base/${article.slug}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-2">Knowledge Base</h1>
+          <p className="text-muted-foreground">
+            Learn about portfolio management, investment strategies, and more
+          </p>
+        </div>
+        
+        <Card className="bg-red-500/10 border-red-500/20">
+          <CardContent className="flex items-center gap-3 p-6">
+            <div>
+              <h3 className="text-lg font-medium text-red-400">Error cargando artículos</h3>
+              <p className="text-red-300/70">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -133,7 +119,11 @@ export default function KnowledgeBasePage() {
                     {filteredArticles
                       .filter(article => article.featured)
                       .map((article) => (
-                        <Card key={article.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                        <Card 
+                          key={article.id} 
+                          className="cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => handleArticleClick(article)}
+                        >
                           <CardHeader>
                             <div className="flex items-start justify-between">
                               <CardTitle className="text-lg">{article.title}</CardTitle>
@@ -148,7 +138,7 @@ export default function KnowledgeBasePage() {
                               <div className="flex items-center gap-4">
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-4 h-4" />
-                                  {article.readTime}
+                                  {article.read_time} min
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <TrendingUp className="w-4 h-4" />
@@ -171,7 +161,11 @@ export default function KnowledgeBasePage() {
                 </h2>
                 <div className="space-y-4">
                   {filteredArticles.map((article) => (
-                    <Card key={article.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <Card 
+                      key={article.id} 
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleArticleClick(article)}
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -183,7 +177,7 @@ export default function KnowledgeBasePage() {
                               </Badge>
                               <span className="text-xs text-muted-foreground flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {article.readTime}
+                                {article.read_time} min
                               </span>
                               <span className="text-xs text-muted-foreground flex items-center gap-1">
                                 <TrendingUp className="w-3 h-3" />
@@ -203,6 +197,24 @@ export default function KnowledgeBasePage() {
                   </div>
                 )}
               </div>
+
+              {/* Estadísticas */}
+              {stats.totalArticles > 0 && (
+                <div className="mt-8">
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <div className="flex flex-wrap items-center justify-between text-sm text-muted-foreground">
+                        <span>
+                          Mostrando {filteredArticles.length} de {stats.totalArticles} artículos
+                        </span>
+                        <span>
+                          {stats.featuredArticles} artículos destacados • {stats.totalViews} vistas totales
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
     </div>
   )
 }
