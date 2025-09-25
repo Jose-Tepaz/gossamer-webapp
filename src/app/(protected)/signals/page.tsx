@@ -1,14 +1,32 @@
+/**
+ * Página de Señales
+ * 
+ * Esta página muestra una lista de documentos semanales de señales y análisis para mejorar las decisiones de trading del usuario.
+ * Permite filtrar los documentos por búsqueda, categoría y periodo de tiempo.
+ * Los usuarios pueden ver o descargar los documentos directamente desde la interfaz.
+ * 
+ * Componentes principales:
+ * - Filtros de búsqueda, categoría y periodo.
+ * - Listado de documentos con información relevante.
+ * - Acciones para ver o descargar cada documento.
+ * - Estadísticas de documentos mostrados y última actualización.
+ * 
+ * Notas:
+ * - Todos los logs de consola han sido eliminados para producción.
+ * - Se utiliza Supabase para la gestión de documentos y almacenamiento.
+ */
+
 "use client"
 
 import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Download, Eye, FileText, Calendar, Filter, AlertCircle } from "lucide-react"
 import { useSignalDocuments, type SignalDocument } from "@/hooks/useSignalDocuments"
-import { supabase, checkSupabaseConfig } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -30,15 +48,13 @@ export default function SignalsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedDateRange, setSelectedDateRange] = useState<string>('')
 
-  // Use the custom hook to handle documents
+  // Hook personalizado para manejar documentos
   const {
-    documents,
     filteredDocuments,
     loading,
     error,
     downloadDocument,
     downloadDocumentDirect,
-    getDocumentUrl,
     getStats
   } = useSignalDocuments({
     searchTerm: searchTerm || undefined,
@@ -48,55 +64,34 @@ export default function SignalsPage() {
 
   const stats = getStats()
 
-  // Debug function to test Supabase connection
+  // Función para probar la conexión a Supabase (sin logs)
   const testSupabaseConnection = async () => {
-    console.log('🧪 Testing Supabase connection...')
-    console.log('🔧 Supabase config check:', checkSupabaseConfig())
-    console.log('🔗 Supabase client:', supabase)
-    
     if (!supabase) {
-      console.error('❌ Supabase client is null')
       return
     }
 
     try {
-      // Test 1: Check if table exists
-      console.log('🔍 Test 1: Checking if signal_documents table exists...')
-      const { data: tableCheck, error: tableError } = await supabase
+      await supabase
         .from('signal_documents')
         .select('id')
         .limit(1)
-      
-      console.log('📊 Table check result:', { tableCheck, tableError })
 
-      // Test 2: Try to get count
-      console.log('🔍 Test 2: Getting document count...')
-      const { count, error: countError } = await supabase
+      await supabase
         .from('signal_documents')
         .select('*', { count: 'exact', head: true })
-      
-      console.log('📊 Count result:', { count, countError })
 
-      // Test 3: Try to get all data
-      console.log('🔍 Test 3: Getting all documents...')
-      const { data: allData, error: allError } = await supabase
+      await supabase
         .from('signal_documents')
         .select('*')
         .limit(10)
-      
-      console.log('📊 All data result:', { allData, allError })
 
-      // Test 4: Check user authentication
-      console.log('🔍 Test 4: Checking user authentication...')
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      console.log('📊 User auth result:', { user: user?.id, userError })
-
-    } catch (err) {
-      console.error('❌ Direct query error:', err)
+      await supabase.auth.getUser()
+    } catch {
+      // Silenciar errores en producción
     }
   }
 
-  // Run test on component mount
+  // Ejecutar test al montar el componente
   React.useEffect(() => {
     testSupabaseConnection()
   }, [])
@@ -110,103 +105,69 @@ export default function SignalsPage() {
 
   const handleDownload = async (document: SignalDocument) => {
     try {
-      console.log('🔍 Attempting to download document:', document)
-      
-      // Try the main download method first
+      // Intentar el método principal de descarga
       try {
         await downloadDocument(document)
-        console.log('✅ Download completed successfully')
-      } catch (downloadError) {
-        console.warn('⚠️ Main download failed, trying direct method:', downloadError)
-        
-        // Fallback to direct download
+      } catch {
+        // Si falla, intentar el método directo
         try {
           await downloadDocumentDirect(document)
-          console.log('✅ Direct download completed successfully')
         } catch (directError) {
-          console.error('❌ Both download methods failed:', directError)
           throw directError
         }
       }
     } catch (error) {
-      console.error('❌ Error downloading file:', error)
-      alert(`Error downloading file: ${error}`)
+      alert(`Error descargando el archivo: ${error}`)
     }
   }
 
   const handleView = async (document: SignalDocument) => {
     try {
-      console.log('🔍 Attempting to view document:', document)
-      
-      // Extract filename from file_url (in case it contains full URL)
+      // Extraer el nombre del archivo desde file_url
       let fileName = document.file_url
-      
-      // If file_url contains a full URL, extract just the filename
+
       if (fileName.includes('/')) {
         fileName = fileName.split('/').pop() || fileName
-        // Decode URL encoding
         fileName = decodeURIComponent(fileName)
       }
-      
-      console.log('🔍 File processing:', {
-        originalFileUrl: document.file_url,
-        extractedFileName: fileName,
-        documentFileName: document.file_name
-      })
-      
-      // First, list all files in the bucket to see what's available
+
+      // Listar archivos en el bucket
       if (!supabase) {
-        console.error('❌ Supabase client not available')
-        alert('Supabase client not configured')
+        alert('Supabase client no está configurado')
         return
       }
 
-      const { data: allFiles, error: listError } = await supabase.storage
+      const { data: allFiles } = await supabase.storage
         .from('signal-documents')
         .list('')
-      
-      console.log('📁 All files in bucket:', { allFiles, listError })
-      
-      // Check if our specific file exists
+
       const fileExists = allFiles?.some(file => file.name === fileName)
-      console.log('🔍 File exists check:', { 
-        lookingFor: fileName, 
-        fileExists,
-        availableFiles: allFiles?.map(f => f.name)
-      })
-      
+
       if (!fileExists) {
-        console.error('❌ File not found in storage:', fileName)
-        alert(`File "${document.file_name}" not found in storage. Available files: ${allFiles?.map(f => f.name).join(', ') || 'None'}`)
+        alert(`El archivo "${document.file_name}" no se encuentra en el almacenamiento. Archivos disponibles: ${allFiles?.map(f => f.name).join(', ') || 'Ninguno'}`)
         return
       }
-      
-      // Get the public URL using the extracted filename
+
+      // Obtener la URL pública
       const { data } = supabase!.storage
         .from('signal-documents')
         .getPublicUrl(fileName)
-      
-      console.log('🔗 Generated URL:', data.publicUrl)
-      
-      // Test the URL before opening
+
+      // Probar la URL antes de abrir
       try {
         const response = await fetch(data.publicUrl, { method: 'HEAD' })
         if (!response.ok) {
-          console.error('❌ URL not accessible:', response.status, response.statusText)
-          alert(`File is not accessible: ${response.statusText}`)
+          alert(`El archivo no es accesible: ${response.statusText}`)
           return
         }
-        console.log('✅ URL is accessible')
       } catch (fetchError) {
-        console.error('❌ Error testing URL:', fetchError)
-        alert(`Error accessing file: ${fetchError}`)
+        alert(`Error accediendo al archivo: ${fetchError}`)
         return
       }
-      
+
       window.open(data.publicUrl, '_blank')
     } catch (error) {
-      console.error('❌ Error opening file:', error)
-      alert(`Error opening file: ${error}`)
+      alert(`Error abriendo el archivo: ${error}`)
     }
   }
 
@@ -242,7 +203,7 @@ export default function SignalsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div>
         <h1 className="text-3xl font-bold">Signals</h1>
         <p className="mt-2">
@@ -250,7 +211,7 @@ export default function SignalsPage() {
         </p>
       </div>
 
-      {/* Filters */}
+      {/* Filtros */}
       <Card className="bg-white/5 text-black">
         <CardHeader>
           <CardTitle className=" flex items-center gap-2">
@@ -260,7 +221,7 @@ export default function SignalsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Search */}
+            {/* Búsqueda */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Search</label>
               <Input
@@ -271,7 +232,7 @@ export default function SignalsPage() {
               />
             </div>
 
-            {/* Category */}
+            {/* Categoría */}
             <div className="space-y-2">
               <label className="text-sm font-medium ">Category</label>
               <Select value={selectedCategory || undefined} onValueChange={(value) => setSelectedCategory(value === "all" ? "" : value)}>
@@ -289,7 +250,7 @@ export default function SignalsPage() {
               </Select>
             </div>
 
-            {/* Date range */}
+            {/* Periodo */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Period</label>
               <Select value={selectedDateRange || undefined} onValueChange={(value) => setSelectedDateRange(value === "all" ? "" : value)}>
@@ -308,9 +269,7 @@ export default function SignalsPage() {
         </CardContent>
       </Card>
 
-      
-
-      {/* Document list */}
+      {/* Lista de documentos */}
       <div className="space-y-4">
         {filteredDocuments.length === 0 ? (
           <Card className="bg-white/5 border-white/10">
@@ -380,7 +339,7 @@ export default function SignalsPage() {
         )}
       </div>
 
-      {/* Statistics */}
+      {/* Estadísticas */}
       {stats.totalDocuments > 0 && (
         <Card className="bg-white/5 border-white/10">
           <CardContent className="p-4">

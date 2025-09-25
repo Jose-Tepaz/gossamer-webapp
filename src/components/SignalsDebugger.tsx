@@ -11,7 +11,7 @@ interface DebugResult {
   test: string
   status: 'success' | 'error' | 'warning' | 'info'
   message: string
-  data?: any
+  data?: unknown
 }
 
 export default function SignalsDebugger() {
@@ -221,7 +221,7 @@ export default function SignalsDebugger() {
       </CardHeader>
       <CardContent className="space-y-4">
         {results.length === 0 ? (
-          <p className="text-black/70">Click "Run Diagnostics" to test the Signals functionality</p>
+          <p className="text-black/70">Click &quot;Run Diagnostics&quot; to test the Signals functionality</p>
         ) : (
           results.map((result, index) => (
             <div key={index} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
@@ -232,7 +232,7 @@ export default function SignalsDebugger() {
                   {getStatusBadge(result.status)}
                 </div>
                 <p className="text-black/70 text-sm">{result.message}</p>
-                {result.data && (
+                {result.data !== undefined && (
                   <details className="mt-2">
                     <summary className="text-black/60 text-xs cursor-pointer">
                       Show Details

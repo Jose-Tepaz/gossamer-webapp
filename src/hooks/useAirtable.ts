@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { 
   getUserInvestmentModels,
@@ -19,7 +19,7 @@ export const useAirtable = () => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
 
   // Fetch user's investment models
-  const fetchInvestmentModels = async () => {
+  const fetchInvestmentModels = useCallback(async () => {
     if (!user?.id) return;
     
     setLoading(true);
@@ -34,7 +34,7 @@ export const useAirtable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   // Create new investment model
   const createInvestmentModel = async (modelData: {
@@ -138,7 +138,7 @@ export const useAirtable = () => {
   };
 
   // Fetch user's portfolios
-  const fetchPortfolios = async () => {
+  const fetchPortfolios = useCallback(async () => {
     if (!user?.id) return;
     
     setLoading(true);
@@ -164,7 +164,7 @@ export const useAirtable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   // Create transaction
   const createTransaction = async (transactionData: {
@@ -269,7 +269,7 @@ export const useAirtable = () => {
       fetchInvestmentModels();
       fetchPortfolios();
     }
-  }, [user?.id]);
+  }, [user?.id, fetchInvestmentModels, fetchPortfolios]);
 
   return {
     // State

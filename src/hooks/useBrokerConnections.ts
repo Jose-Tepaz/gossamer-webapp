@@ -80,7 +80,7 @@ export function useBrokerConnections() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userData?.user_secret]);
+  }, [user?.id, userData]);
 
   // Función para actualizar una conexión específica
   const updateConnection = useCallback((brokerId: string, isConnected: boolean) => {

@@ -105,7 +105,7 @@ export const useSignalDocuments = (filters?: SignalDocumentFilters) => {
     }
 
     return filtered
-  }, [documents, filters?.searchTerm, filters?.category, filters?.dateRange])
+  }, [documents, filters])
 
   // Cargar documentos al montar el componente
   useEffect(() => {
@@ -131,6 +131,10 @@ export const useSignalDocuments = (filters?: SignalDocumentFilters) => {
         documentFileName: document.file_name
       })
 
+      if (!supabase) {
+        throw new Error('Supabase client not configured')
+      }
+
       // First, check if the file exists
       const { data: fileData, error: checkError } = await supabase.storage
         .from('signal-documents')
@@ -150,19 +154,19 @@ export const useSignalDocuments = (filters?: SignalDocumentFilters) => {
 
       // Create download link
       const url = URL.createObjectURL(fileData)
-      const a = document.createElement('a')
+      const a = window.document.createElement('a')
       a.href = url
       a.download = document.file_name || fileName
       a.style.display = 'none'
       
       // Add to DOM, trigger download, then remove
-      document.body.appendChild(a)
+      window.document.body.appendChild(a)
       console.log('🖱️ Triggering download for:', a.download)
       a.click()
       
       // Clean up
       setTimeout(() => {
-        document.body.removeChild(a)
+        window.document.body.removeChild(a)
         URL.revokeObjectURL(url)
         console.log('✅ Download cleanup completed')
       }, 100)
@@ -176,6 +180,10 @@ export const useSignalDocuments = (filters?: SignalDocumentFilters) => {
 
   // Función para obtener URL pública de un documento
   const getDocumentUrl = (document: SignalDocument) => {
+    if (!supabase) {
+      throw new Error('Supabase client not configured')
+    }
+
     // Extract filename from file_url (in case it contains full URL)
     let fileName = document.file_url
     

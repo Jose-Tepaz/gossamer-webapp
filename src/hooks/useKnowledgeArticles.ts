@@ -35,6 +35,11 @@ export const useKnowledgeArticles = (filters?: KnowledgeArticleFilters) => {
       setLoading(true)
       setError(null)
 
+      if (!supabase) {
+        setError('Supabase client not configured')
+        return
+      }
+
       const { data, error } = await supabase
         .from('knowledge_articles')
         .select('*')
@@ -83,7 +88,7 @@ export const useKnowledgeArticles = (filters?: KnowledgeArticleFilters) => {
     }
 
     return filtered
-  }, [articles, filters?.searchQuery, filters?.category, filters?.featured])
+  }, [articles, filters])
 
   // Cargar artículos al montar el componente
   useEffect(() => {
@@ -131,9 +136,12 @@ export const useKnowledgeArticles = (filters?: KnowledgeArticleFilters) => {
         return
       }
 
+      const article = articles.find(a => a.id === articleId)
+      const newViews = article ? (article.views + 1) : 1
+
       const { error } = await supabase
         .from('knowledge_articles')
-        .update({ views: articles.find(a => a.id === articleId)?.views + 1 || 1 })
+        .update({ views: newViews })
         .eq('id', articleId)
 
       if (error) {

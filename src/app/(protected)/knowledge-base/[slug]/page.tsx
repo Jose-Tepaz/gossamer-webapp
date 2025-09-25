@@ -53,7 +53,7 @@ export default function ArticlePage() {
       setError('No se proporcionó un slug')
       setLoading(false)
     }
-  }, [slug]) // Solo slug como dependencia para evitar bucles
+  }, [slug, getArticleBySlug, incrementViews]) // Incluir todas las dependencias
 
   const getCategoryColor = (category: string) => {
     switch (category) {
