@@ -41,7 +41,7 @@ export interface ForgotPasswordData {
 }
 
 export interface ResetPasswordData {
-  token: string;
+  code: string;
   password: string;
   confirmPassword: string;
 }
@@ -59,7 +59,9 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<AuthResponse>;
+  forgotPassword: (email: string) => Promise<AuthResponse>;
+  resetPassword: (code: string, newPassword: string) => Promise<AuthResponse>;
+  sendEmailVerification: () => Promise<AuthResponse>;
 }
 
 // Plan types

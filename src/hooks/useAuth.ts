@@ -3,10 +3,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, AuthState } from '@/types/auth';
+import { User, AuthState, AuthContextType } from '@/types/auth';
 import { syncUserWithSupabase, registerUserInSnapTrade } from '@/lib/memberstack-supabase-sync';
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     loading: true,
@@ -93,6 +93,7 @@ export const useAuth = () => {
 
     initAuth();
   }, []);
+
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -354,13 +355,62 @@ export const useAuth = () => {
     }
   };
 
-  // Reset password function
-  const resetPassword = async (email: string) => {
+  // Session management - check for expired sessions
+  useEffect(() => {
+    const checkSessionValidity = async () => {
+      if (!authState.user) return;
+
+      try {
+        const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_PUBLIC_KEY;
+        
+        if (!publicKey) {
+          // Demo mode - no session expiration
+          return;
+        }
+
+        // Check session validity every 5 minutes
+        const MemberStack = await import('@memberstack/dom');
+        const memberstack = MemberStack.default.init({ publicKey });
+        
+        const member = await memberstack.getCurrentMember();
+        
+        if (!member?.data) {
+          console.log('🔄 Session expired, logging out...');
+          await logout();
+        }
+      } catch (error) {
+        console.error('❌ Error checking session validity:', error);
+        // If we can't check the session, assume it's expired for security
+        await logout();
+      }
+    };
+
+    // Check session validity every 5 minutes
+    const interval = setInterval(checkSessionValidity, 5 * 60 * 1000);
+
+    // Also check on window focus (user comes back to tab)
+    const handleFocus = () => {
+      checkSessionValidity();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [authState.user, logout]);
+
+  // Forgot password function (send reset email)
+  const forgotPassword = async (email: string) => {
+    setAuthState(prev => ({ ...prev, loading: true, error: null }));
+    
     try {
       const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_PUBLIC_KEY;
       
       if (!publicKey) {
         console.log('🚨 Demo mode - password reset not available');
+        setAuthState(prev => ({ ...prev, loading: false, error: 'Password reset not available in demo mode' }));
         return { success: false, error: 'Password reset not available in demo mode' };
       }
 
@@ -371,16 +421,108 @@ export const useAuth = () => {
         const result = await memberstack.sendMemberResetPasswordEmail({ email }) as any;
         
         if (result) {
-          return { success: true, error: null };
+          setAuthState(prev => ({ ...prev, loading: false, error: null }));
+          return { success: true };
         } else {
-          return { success: false, error: 'Failed to send reset email' };
+          const errorMessage = 'Failed to send reset email';
+          setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+          return { success: false, error: errorMessage };
+        }
+      } catch (memberstackError) {
+        console.error('Memberstack forgot password error:', memberstackError);
+        const errorMessage = 'Failed to send reset email. Please check your email address.';
+        setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+        return { success: false, error: errorMessage };
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send reset email';
+      setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // Reset password function (with code and new password)
+  const resetPassword = async (code: string, newPassword: string) => {
+    setAuthState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_PUBLIC_KEY;
+      
+      if (!publicKey) {
+        console.log('🚨 Demo mode - password reset not available');
+        setAuthState(prev => ({ ...prev, loading: false, error: 'Password reset not available in demo mode' }));
+        return { success: false, error: 'Password reset not available in demo mode' };
+      }
+
+      try {
+        const MemberStack = await import('@memberstack/dom');
+        const memberstack = MemberStack.default.init({ publicKey });
+        
+        // Memberstack maneja el reset de contraseña con el código
+        // que el usuario recibe por email (pasamos el código como token)
+        const result = await memberstack.resetMemberPassword({
+          token: code,
+          newPassword
+        }) as any;
+        
+        if (result) {
+          setAuthState(prev => ({ ...prev, loading: false, error: null }));
+          return { success: true };
+        } else {
+          const errorMessage = 'Failed to reset password';
+          setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+          return { success: false, error: errorMessage };
         }
       } catch (memberstackError) {
         console.error('Memberstack reset password error:', memberstackError);
-        return { success: false, error: 'Failed to send reset email' };
+        const errorMessage = 'Failed to reset password. The code may be invalid or expired.';
+        setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+        return { success: false, error: errorMessage };
       }
     } catch (error: unknown) {
-      return { success: false, error: error instanceof Error ? error.message : 'Failed to send reset email' };
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+      setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // Send email verification function
+  const sendEmailVerification = async () => {
+    setAuthState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_PUBLIC_KEY;
+      
+      if (!publicKey) {
+        console.log('🚨 Demo mode - email verification not available');
+        setAuthState(prev => ({ ...prev, loading: false, error: 'Email verification not available in demo mode' }));
+        return { success: false, error: 'Email verification not available in demo mode' };
+      }
+
+      try {
+        const MemberStack = await import('@memberstack/dom');
+        const memberstack = MemberStack.default.init({ publicKey });
+        
+        const result = await memberstack.sendMemberVerificationEmail() as any;
+        
+        if (result) {
+          setAuthState(prev => ({ ...prev, loading: false, error: null }));
+          return { success: true };
+        } else {
+          const errorMessage = 'Failed to send verification email';
+          setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+          return { success: false, error: errorMessage };
+        }
+      } catch (memberstackError) {
+        console.error('Memberstack email verification error:', memberstackError);
+        const errorMessage = 'Failed to send verification email. Please try again.';
+        setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+        return { success: false, error: errorMessage };
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send verification email';
+      setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -389,6 +531,8 @@ export const useAuth = () => {
     login,
     register,
     logout,
+    forgotPassword,
     resetPassword,
+    sendEmailVerification,
   };
 }; 
