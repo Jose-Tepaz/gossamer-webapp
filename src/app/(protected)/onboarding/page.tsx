@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, ArrowRight, TrendingUp, Shield, Zap, PartyPopper } from "lucide-react"
 import { useOnboarding } from "@/hooks/useOnboarding"
+import { usePlanSelection, PlanType } from "@/hooks/usePlanSelection"
 import ConnectBroker from "@/components/layout/ConectBrocker"
 
 type OnboardingStep = 'welcome' | 'connect-broker' | 'success' | 'choose-plan'
@@ -36,7 +37,7 @@ const STEPS = [
   }
 ]
 
-type Plan = "free" | "pro" | "premium"
+// Removido - ahora usamos PlanType del hook
 
 function PlanCard({
   name,
@@ -47,6 +48,7 @@ function PlanCard({
   icon,
   onChoose,
   cta = "Choose plan",
+  disabled = false,
 }: {
   name: string
   price: string
@@ -56,6 +58,7 @@ function PlanCard({
   icon: React.ReactNode
   cta?: string
   onChoose: () => void
+  disabled?: boolean
 }) {
   return (
     <Card
@@ -91,8 +94,9 @@ function PlanCard({
           className="w-full text-white"
           style={{ backgroundColor: "#872eec" }}
           onClick={onChoose}
+          disabled={disabled}
         >
-          {cta}
+          {disabled ? "Procesando..." : cta}
         </Button>
       </CardContent>
     </Card>
@@ -101,6 +105,7 @@ function PlanCard({
 
 export default function OnboardingPage() {
   const { markBrokerConnected, markPlanSelected, completeOnboarding } = useOnboarding()
+  const { selectPlan, loading: planLoading, error: planError } = usePlanSelection()
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome')
   const [connectedBroker, setConnectedBroker] = useState<string>('')
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
@@ -128,13 +133,26 @@ export default function OnboardingPage() {
     setCurrentStep('choose-plan')
   }
 
-  const handlePlanSelect = (plan: Plan) => {
+  const handlePlanSelect = async (plan: PlanType) => {
     try {
-      localStorage.setItem("membership_plan", JSON.stringify({ plan, billing }))
-      markPlanSelected()
-      completeOnboarding()
+      console.log('🔄 Seleccionando plan:', plan)
+      
+      // Usar el hook de selección de planes
+      const result = await selectPlan(plan)
+      
+      if (result.success) {
+        // Guardar en localStorage para referencia local
+        localStorage.setItem("membership_plan", JSON.stringify({ plan, billing }))
+        
+        // Marcar como completado y continuar
+        markPlanSelected()
+        completeOnboarding()
+      } else {
+        console.error('Error seleccionando plan:', result.error)
+        // El error ya se maneja en el hook usePlanSelection
+      }
     } catch (error) {
-      console.error('Error saving plan:', error)
+      console.error('Error inesperado seleccionando plan:', error)
     }
   }
 
@@ -254,6 +272,20 @@ export default function OnboardingPage() {
               <p className="text-gray-600 mb-4">
                 Select the plan that best fits your investment goals and trading style.
               </p>
+              
+              {/* Error message */}
+              {planError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4 max-w-md mx-auto">
+                  <div className="text-sm text-red-600">{planError}</div>
+                </div>
+              )}
+              
+              {/* Loading indicator */}
+              {planLoading && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4 max-w-md mx-auto">
+                  <div className="text-sm text-blue-600">Procesando selección de plan...</div>
+                </div>
+              )}
               <div className="flex items-center justify-center gap-4">
                 <Button
                   variant={billing === "monthly" ? "default" : "outline"}
@@ -289,8 +321,9 @@ export default function OnboardingPage() {
                   "Basic analytics"
                 ]}
                 icon={<TrendingUp className="h-4 w-4" />}
-                onChoose={() => handlePlanSelect("free")}
+                onChoose={() => handlePlanSelect("Free")}
                 cta="Start Free"
+                disabled={planLoading}
               />
               
               <PlanCard
@@ -307,8 +340,9 @@ export default function OnboardingPage() {
                 ]}
                 highlight={true}
                 icon={<Shield className="h-4 w-4" />}
-                onChoose={() => handlePlanSelect("pro")}
+                onChoose={() => handlePlanSelect("Pro")}
                 cta="Start Pro"
+                disabled={planLoading}
               />
               
               <PlanCard
@@ -324,8 +358,9 @@ export default function OnboardingPage() {
                   "White-label options"
                 ]}
                 icon={<Zap className="h-4 w-4" />}
-                onChoose={() => handlePlanSelect("premium")}
+                onChoose={() => handlePlanSelect("Premium")}
                 cta="Start Premium"
+                disabled={planLoading}
               />
             </div>
           </div>

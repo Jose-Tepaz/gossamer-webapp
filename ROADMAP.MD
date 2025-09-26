@@ -15,10 +15,10 @@
   - [ ] Validar conexión vía API de SnapTrade (o servicio correspondiente)  
   - [ ] Guardar la conexión en Supabase asociada al usuario  
 
-- [ ] **Select plan**  
-  - [ ] Conectar con **Memberstack** (planes, precios, upgrades/downgrades)  
-  - [ ] Validar estado de suscripción en tiempo real (activo, vencido, pendiente)  
-  - [ ] Redirección al dashboard solo si el plan está activo  
+- [x] **Select plan**  
+  - [x] Conectar con **Memberstack** (planes, precios, upgrades/downgrades)  
+  - [x] Validar estado de suscripción en tiempo real (activo, vencido, pendiente)  
+  - [x] Redirección al dashboard solo si el plan está activo  
 
 ---
 

@@ -5,6 +5,7 @@ export interface UserData {
   first_name: string | null
   last_name: string | null
   user_secret: string | null // ID de SnapTrade
+  plan_type: string | null // Plan seleccionado (Free, Pro, Premium)
   created_at: string
   updated_at: string
 }
@@ -15,6 +16,7 @@ export interface CreateUserDataInput {
   first_name?: string
   last_name?: string
   user_secret?: string
+  plan_type?: string
 }
 
 export interface UpdateUserDataInput {
@@ -22,6 +24,7 @@ export interface UpdateUserDataInput {
   first_name?: string
   last_name?: string
   user_secret?: string
+  plan_type?: string
 }
 
 // Tipos para respuestas de Supabase

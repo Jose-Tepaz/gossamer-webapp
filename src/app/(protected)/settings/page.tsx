@@ -16,12 +16,18 @@ import {
   Trash2,
   Save,
   Eye,
-  EyeOff
+  EyeOff,
+  CreditCard,
+  CheckCircle2,
+  TrendingUp,
+  Zap
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { usePlanSelection, PlanType } from "@/hooks/usePlanSelection"
 
 export default function SettingsPage() {
   const { user } = useAuth()
+  const { selectPlan, loading: planLoading, error: planError } = usePlanSelection()
   const [activeTab, setActiveTab] = useState("profile")
   const [isSaving, setIsSaving] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -80,6 +86,24 @@ export default function SettingsPage() {
     }
   }
 
+  const handlePlanSelect = async (planType: PlanType) => {
+    try {
+      console.log('🔄 Seleccionando plan desde settings:', planType)
+      
+      const result = await selectPlan(planType)
+      
+      if (result.success) {
+        console.log('✅ Plan seleccionado exitosamente:', planType)
+        // Aquí podrías mostrar una notificación de éxito
+      } else {
+        console.error('❌ Error seleccionando plan:', result.error)
+        // El error ya se maneja en el hook usePlanSelection
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado seleccionando plan:', error)
+    }
+  }
+
   return (
     <div>
               {/* Header */}
@@ -123,6 +147,14 @@ export default function SettingsPage() {
                 >
                   <Globe className="w-4 h-4 mr-2" />
                   Preferences
+                </Button>
+                <Button
+                  variant={activeTab === "plans" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("plans")}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Plans
                 </Button>
               </div>
 
@@ -362,6 +394,217 @@ export default function SettingsPage() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Plans Tab */}
+              {activeTab === "plans" && (
+                <div className="space-y-6">
+                  {/* Current Plan Status */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Current Plan</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">{user?.planType || 'Free'}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {user?.planType === 'Free' ? 'Basic features included' : 
+                             user?.planType === 'Pro' ? 'Advanced features and analytics' : 
+                             'Premium features with AI insights'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-bold">
+                            {user?.planType === 'Free' ? '$0' : 
+                             user?.planType === 'Pro' ? '$24' : '$49'}
+                          </span>
+                          <span className="text-sm text-muted-foreground">/month</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Error Message */}
+                  {planError && (
+                    <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                      <div className="text-sm text-red-600">{planError}</div>
+                    </div>
+                  )}
+
+                  {/* Loading Indicator */}
+                  {planLoading && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                      <div className="text-sm text-blue-600">Procesando selección de plan...</div>
+                    </div>
+                  )}
+
+                  {/* Available Plans */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Free Plan */}
+                    <Card className={`relative ${user?.planType === 'Free' ? 'ring-2 ring-green-500' : ''}`}>
+                      {user?.planType === 'Free' && (
+                        <div className="absolute -top-2 left-4 bg-green-500 text-white px-2 py-1 rounded-full text-xs">
+                          Current Plan
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2">
+                          <div className="grid place-items-center size-8 rounded-md bg-gray-100">
+                            <TrendingUp className="h-4 w-4" />
+                          </div>
+                          <CardTitle className="text-lg">Free</CardTitle>
+                        </div>
+                        <div className="mt-1">
+                          <span className="text-3xl font-semibold">$0</span>
+                          <span className="text-muted-foreground">/mo</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <ul className="space-y-2">
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Basic portfolio tracking</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Up to 3 model portfolios</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Standard support</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Basic analytics</span>
+                          </li>
+                        </ul>
+                        <Button
+                          className="w-full"
+                          variant={user?.planType === 'Free' ? "outline" : "default"}
+                          onClick={() => handlePlanSelect("Free")}
+                          disabled={planLoading || user?.planType === 'Free'}
+                        >
+                          {user?.planType === 'Free' ? 'Current Plan' : 'Select Free'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Pro Plan */}
+                    <Card className={`relative ${user?.planType === 'Pro' ? 'ring-2 ring-blue-500' : ''}`}>
+                      {user?.planType === 'Pro' && (
+                        <div className="absolute -top-2 left-4 bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
+                          Current Plan
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2">
+                          <div className="grid place-items-center size-8 rounded-md bg-blue-100">
+                            <Shield className="h-4 w-4" />
+                          </div>
+                          <CardTitle className="text-lg">Pro</CardTitle>
+                        </div>
+                        <div className="mt-1">
+                          <span className="text-3xl font-semibold">$24</span>
+                          <span className="text-muted-foreground">/mo</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <ul className="space-y-2">
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Everything in Free</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Unlimited model portfolios</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Advanced analytics</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Priority support</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Custom alerts</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>API access</span>
+                          </li>
+                        </ul>
+                        <Button
+                          className="w-full"
+                          variant={user?.planType === 'Pro' ? "outline" : "default"}
+                          onClick={() => handlePlanSelect("Pro")}
+                          disabled={planLoading || user?.planType === 'Pro'}
+                        >
+                          {user?.planType === 'Pro' ? 'Current Plan' : 'Select Pro'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Premium Plan */}
+                    <Card className={`relative ${user?.planType === 'Premium' ? 'ring-2 ring-purple-500' : ''}`}>
+                      {user?.planType === 'Premium' && (
+                        <div className="absolute -top-2 left-4 bg-purple-500 text-white px-2 py-1 rounded-full text-xs">
+                          Current Plan
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center gap-2">
+                          <div className="grid place-items-center size-8 rounded-md bg-purple-100">
+                            <Zap className="h-4 w-4" />
+                          </div>
+                          <CardTitle className="text-lg">Premium</CardTitle>
+                        </div>
+                        <div className="mt-1">
+                          <span className="text-3xl font-semibold">$49</span>
+                          <span className="text-muted-foreground">/mo</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <ul className="space-y-2">
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Everything in Pro</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>AI-powered insights</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Portfolio optimization</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Dedicated account manager</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Custom integrations</span>
+                          </li>
+                          <li className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>White-label options</span>
+                          </li>
+                        </ul>
+                        <Button
+                          className="w-full"
+                          variant={user?.planType === 'Premium' ? "outline" : "default"}
+                          onClick={() => handlePlanSelect("Premium")}
+                          disabled={planLoading || user?.planType === 'Premium'}
+                        >
+                          {user?.planType === 'Premium' ? 'Current Plan' : 'Select Premium'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               )}
 
               {/* Action Buttons */}
