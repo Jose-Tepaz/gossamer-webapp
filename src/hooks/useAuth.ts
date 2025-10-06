@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, AuthState, AuthContextType } from '@/types/auth';
 import { syncUserWithSupabase, registerUserInSnapTrade } from '@/lib/memberstack-supabase-sync';
@@ -315,7 +315,7 @@ export const useAuth = (): AuthContextType => {
   };
 
   // Logout function
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_PUBLIC_KEY;
       
@@ -353,7 +353,7 @@ export const useAuth = (): AuthContextType => {
       setAuthState({ user: null, loading: false, error: null });
       router.push('/login');
     }
-  };
+  }, [router]);
 
   // Session management - check for expired sessions
   useEffect(() => {

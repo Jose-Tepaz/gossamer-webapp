@@ -1,5 +1,6 @@
 /**
- * Servicio para interactuar con la API de SnapTrade a través del backend
+ * Servicio para interactuar con la API de SnapTrade a través de endpoints locales
+ * MIGRADO: Ahora usa /api/snaptrade/* en lugar del backend separado
  */
 
 import { getSnapTradeUrls } from './config';
@@ -73,7 +74,7 @@ class SnapTradeService {
     this.urls = getSnapTradeUrls(useMock);
     console.log('🔧 SnapTradeService inicializado con URLs:', this.urls);
     console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
-    console.log('🔧 NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+    console.log('✅ Usando endpoints locales en /api/snaptrade/*');
   }
 
   /**
@@ -93,6 +94,7 @@ class SnapTradeService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error en registerUser:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
@@ -126,21 +128,23 @@ class SnapTradeService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error en getConnectPortalUrl:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       console.log('✅ URL del portal obtenida:', data);
-      console.log('🔍 Tipo de data:', typeof data);
+      console.log('🔍 Tipo de data.redirectUri:', typeof data.redirectUri);
       console.log('🔍 data.redirectUri:', data.redirectUri);
-      console.log('🔍 Tipo de redirectUri:', typeof data.redirectUri);
       
-      // El backend devuelve { redirectUri: { redirectURI: "url", sessionId: "..." } }, necesitamos extraer la URL
+      // Los endpoints devuelven { redirectUri: "url" } directamente
       const result = {
-        redirectURI: data.redirectUri.redirectURI || data.redirectUri
+        redirectURI: data.redirectUri || data.redirectURI || data
       };
       
       console.log('🔍 Resultado final:', result);
+      console.log('🔍 Tipo de redirectURI final:', typeof result.redirectURI);
+      
       return result;
     } catch (error) {
       console.error('❌ Error obteniendo URL del portal:', error);
@@ -164,13 +168,15 @@ class SnapTradeService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error en listAccounts:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       console.log('✅ Cuentas listadas:', data);
       
-      return data;
+      // Los endpoints devuelven directamente { accounts: [...] }
+      return data.accounts || data;
     } catch (error) {
       console.error('❌ Error listando cuentas:', error);
       throw error;
@@ -193,13 +199,15 @@ class SnapTradeService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error en listAccountHoldings:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       console.log('✅ Holdings listados:', data);
       
-      return data;
+      // Los endpoints devuelven directamente { holdings: {...} }
+      return data.holdings || data;
     } catch (error) {
       console.error('❌ Error listando holdings:', error);
       throw error;
@@ -207,5 +215,5 @@ class SnapTradeService {
   }
 }
 
-// Instancia singleton del servicio (usando backend real por defecto)
+// Instancia singleton del servicio (usando endpoints locales por defecto)
 export const snapTradeService = new SnapTradeService(false);

@@ -49,19 +49,40 @@ export function useBrokerConnections() {
       );
 
       console.log('✅ Cuentas cargadas:', accountsData);
+      console.log('🔍 Tipo de accountsData:', typeof accountsData);
+      console.log('🔍 Es un array?:', Array.isArray(accountsData));
       
-      // La API devuelve { accounts: [...] }, necesitamos extraer el array
-      const accountsArray = (accountsData as any)?.accounts || [];
+      // La API devuelve directamente un array, no un objeto con accounts
+      let accountsArray: any[] = [];
+      
+      if (Array.isArray(accountsData)) {
+        // Si es directamente un array
+        accountsArray = accountsData;
+        console.log('✅ accountsData es directamente un array');
+      } else if ((accountsData as any)?.accounts && Array.isArray((accountsData as any).accounts)) {
+        // Si es un objeto con propiedad accounts
+        accountsArray = (accountsData as any).accounts;
+        console.log('✅ accountsData tiene propiedad accounts');
+      } else {
+        console.log('❌ Formato de datos no reconocido');
+      }
+      
+      console.log('🔍 accountsArray final:', accountsArray);
+      console.log('🔍 Longitud del array:', accountsArray.length);
       setAccounts(accountsArray);
 
       // Crear mapa de conexiones basado en las cuentas reales
       const newConnections: BrokerConnections = {};
       if (accountsArray && Array.isArray(accountsArray)) {
-        accountsArray.forEach((account: any) => {
-          console.log('🔍 Procesando cuenta:', account);
+        accountsArray.forEach((account: any, index: number) => {
+          console.log(`🔍 Procesando cuenta ${index}:`, account);
+          console.log(`🔍 Claves disponibles en la cuenta:`, Object.keys(account));
           
-          // Usar institution_name directamente (está siempre disponible)
+          // Usar institution_name que está disponible en los datos
           const brokerId = account.institution_name?.toLowerCase();
+          
+          console.log(`🔍 institution_name:`, account.institution_name);
+          console.log(`🔍 Broker ID encontrado:`, brokerId);
           
           if (brokerId) {
             newConnections[brokerId] = true;
@@ -70,6 +91,8 @@ export function useBrokerConnections() {
             console.log('❌ No se encontró institution_name en la cuenta:', account);
           }
         });
+      } else {
+        console.log('❌ accountsArray no es un array válido:', accountsArray);
       }
       console.log('📊 Conexiones finales:', newConnections);
       setConnections(newConnections);

@@ -6,14 +6,13 @@
 export const config = {
   // URLs de la aplicación
   baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000',
   
-  // SnapTrade
+  // SnapTrade - Ahora usa endpoints locales
   snaptrade: {
-    baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/snaptrade` : 'http://localhost:4000/api/snaptrade',
-    clientId: process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID,
-    consumerKey: process.env.SNAPTRADE_CONSUMER_KEY,
-    consumerSecret: process.env.SNAPTRADE_CONSUMER_SECRET,
+    baseUrl: '/api/snaptrade', // Cambiado a endpoints locales
+    clientId: process.env.CLIENT_ID,
+    consumerKey: process.env.CONSUMER_SECRET,
+    consumerSecret: process.env.CONSUMER_SECRET,
   },
   
   // Memberstack
@@ -45,8 +44,9 @@ export const config = {
 export const validateConfig = () => {
   const errors: string[] = []
   
-  if (!config.snaptrade.baseUrl) {
-    errors.push('NEXT_PUBLIC_BACKEND_URL no está configurado')
+  // SnapTrade ya no depende de BACKEND_URL
+  if (!config.snaptrade.clientId && config.isProduction) {
+    errors.push('CLIENT_ID no está configurado (requerido en producción)')
   }
   
   if (!config.memberstack.publicKey) {
@@ -66,15 +66,17 @@ export const validateConfig = () => {
   return true
 }
 
-// URLs específicas de SnapTrade
+// URLs específicas de SnapTrade (ahora todas locales)
 export const snaptradeUrls = {
   registerUser: `${config.snaptrade.baseUrl}/register-user`,
   connectPortal: `${config.snaptrade.baseUrl}/connect-portal-url`,
   listAccounts: `${config.snaptrade.baseUrl}/list-accounts`,
   listHoldings: `${config.snaptrade.baseUrl}/list-account-holdings`,
+  listUsers: `${config.snaptrade.baseUrl}/list-users`,
+  deleteUser: `${config.snaptrade.baseUrl}/delete-user`,
 }
 
-// URLs de mock para desarrollo
+// URLs de mock para desarrollo (mantener para testing)
 export const snaptradeMockUrls = {
   registerUser: `${config.baseUrl}/api/snaptrade-mock/register-user`,
   connectPortal: `${config.baseUrl}/api/snaptrade-mock/connect-portal-url`,
